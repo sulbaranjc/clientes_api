@@ -108,37 +108,3 @@ def actualizar_cliente(cliente_id: int, cliente: ClienteUpdate):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al actualizar el cliente"
         )
-
-
-# =========================
-# DELETE /clientes/{id}
-# =========================
-@router.delete(
-    "/{cliente_id}",
-    status_code=status.HTTP_204_NO_CONTENT
-)
-def eliminar_cliente(cliente_id: int):
-    # Verificar que el cliente existe
-    existente = get_cliente_by_id(cliente_id)
-    if not existente:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente no encontrado"
-        )
-
-    try:
-        eliminado = delete_cliente(cliente_id)
-        
-        if not eliminado:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Cliente no encontrado"
-            )
-        
-        return None
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al eliminar el cliente"
-        )

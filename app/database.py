@@ -23,6 +23,9 @@ def get_connection():
 
 def get_all_clientes():
     conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("SELECT * FROM clientes")
@@ -35,6 +38,9 @@ def get_all_clientes():
 
 def get_cliente_by_id(cliente_id: int):
     conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("SELECT * FROM clientes WHERE id = %s", (cliente_id,))
@@ -47,6 +53,9 @@ def get_cliente_by_id(cliente_id: int):
 
 def create_cliente(data: dict):
     conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
     cursor = conn.cursor()
 
     query = """
@@ -71,8 +80,11 @@ def create_cliente(data: dict):
     return new_id
 
 
-def update_cliente(cliente_id: int, data: dict):
+def update_cliente(cliente_id: int, data: dict) -> bool:
     conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
     cursor = conn.cursor()
 
     query = """
@@ -80,27 +92,32 @@ def update_cliente(cliente_id: int, data: dict):
         SET nombre=%s, apellido=%s, email=%s, telefono=%s, direccion=%s
         WHERE id=%s
     """
+
     values = (
         data["nombre"],
         data["apellido"],
         data["email"],
-        data.get("telefono"),
-        data.get("direccion"),
+        data.get("telefono") if data.get("telefono") else None,
+        data.get("direccion") if data.get("direccion") else None,
         cliente_id
     )
 
     cursor.execute(query, values)
     conn.commit()
 
-    affected = cursor.rowcount
+    actualizado = cursor.rowcount > 0
 
     cursor.close()
     conn.close()
-    return affected
+
+    return actualizado
 
 
 def delete_cliente(cliente_id: int):
     conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM clientes WHERE id=%s", (cliente_id,))
