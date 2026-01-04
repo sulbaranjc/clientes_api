@@ -1,0 +1,723 @@
+# Recolector de fuentes
+
+- Fecha de generación: 2026-01-04 23:15:23
+- Raíz: `/mnt/DocumentosJC/proyectos/python/backend/fastapi/api/clientes_api`
+- Archivo de salida: `repositorio.txt` (chunk 1/1)
+
+## Árbol de archivos incluidos
+
+```text
+
+```
+
+## Índice global (archivo → chunk)
+
+- [001] .env.back
+- [001] .gitignore
+- [001] app/database.py
+- [001] app/main.py
+- [001] app/routers/clientes.py
+- [001] app/routers/clientes_old.py
+- [001] app/schemas/cliente.py
+- [001] docs/init_db.sql
+- [001] README.md
+- [001] requirements.txt
+
+## Archivos omitidos (razones)
+
+### excluded_name_or_ext
+- .env
+
+---
+
+README.md
+-----
+```markdown
+
+```
+
+requirements.txt
+-----
+```
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.12.0
+black==25.12.0
+click==8.3.1
+dnspython==2.8.0
+email-validator==2.3.0
+fastapi==0.128.0
+h11==0.16.0
+idna==3.11
+mypy_extensions==1.1.0
+mysql-connector-python==9.5.0
+packaging==25.0
+pathspec==0.12.1
+platformdirs==4.5.1
+pydantic==2.12.5
+pydantic_core==2.41.5
+python-dotenv==1.2.1
+pytokens==0.3.0
+starlette==0.50.0
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+uvicorn==0.40.0
+
+```
+
+app/database.py
+-----
+```python
+# app/database.py
+
+import mysql.connector
+from mysql.connector import Error
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+def get_connection():
+    try:
+        connection = mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
+        )
+        return connection
+    except Error as e:
+        print(f"Error al conectar a MySQL: {e}")
+        return None
+
+
+def get_all_clientes():
+    conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM clientes")
+    resultados = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    return resultados
+
+
+def get_cliente_by_id(cliente_id: int):
+    conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM clientes WHERE id = %s", (cliente_id,))
+    resultado = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+    return resultado
+
+
+def create_cliente(data: dict):
+    conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
+    cursor = conn.cursor()
+
+    query = """
+        INSERT INTO clientes (nombre, apellido, email, telefono, direccion)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    values = (
+        data["nombre"],
+        data["apellido"],
+        data["email"],
+        data.get("telefono"),
+        data.get("direccion")
+    )
+
+    cursor.execute(query, values)
+    conn.commit()
+
+    new_id = cursor.lastrowid
+
+    cursor.close()
+    conn.close()
+    return new_id
+
+
+def update_cliente(cliente_id: int, data: dict) -> bool:
+    conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
+    cursor = conn.cursor()
+
+    query = """
+        UPDATE clientes
+        SET nombre=%s, apellido=%s, email=%s, telefono=%s, direccion=%s
+        WHERE id=%s
+    """
+
+    values = (
+        data["nombre"],
+        data["apellido"],
+        data["email"],
+        data.get("telefono") if data.get("telefono") else None,
+        data.get("direccion") if data.get("direccion") else None,
+        cliente_id
+    )
+
+    cursor.execute(query, values)
+    conn.commit()
+
+    actualizado = cursor.rowcount > 0
+
+    cursor.close()
+    conn.close()
+
+    return actualizado
+
+
+def delete_cliente(cliente_id: int):
+    conn = get_connection()
+    if not conn:
+        raise Exception("No se pudo conectar a la base de datos")
+    
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM clientes WHERE id=%s", (cliente_id,))
+    conn.commit()
+
+    affected = cursor.rowcount
+
+    cursor.close()
+    conn.close()
+    return affected
+
+```
+
+app/main.py
+-----
+```python
+# app/main.py
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.routers import clientes
+
+app = FastAPI(
+    title="API de Clientes",
+    version="1.0.0"
+)
+
+# CORS (pensando en React)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # en producción se ajusta
+    allow_credentials=False,  # False para permitir * en origins
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(clientes.router)
+
+
+@app.get("/")
+def root():
+    return {
+        "mensaje": "API de Clientes activa 🚀"
+    }
+
+```
+
+app/routers/clientes.py
+-----
+```python
+# app/routers/clientes.py
+
+from fastapi import APIRouter, HTTPException, status
+from typing import List
+from mysql.connector import Error
+
+from app.schemas.cliente import (
+    ClienteResponse,
+    ClienteCreate,
+    ClienteUpdate
+)
+from app.database import (
+    get_all_clientes,
+    get_cliente_by_id,
+    create_cliente,
+    update_cliente,
+    delete_cliente
+)
+
+router = APIRouter(
+    prefix="/clientes",
+    tags=["Clientes"]
+)
+
+
+@router.get("/", response_model=List[ClienteResponse])
+def listar_clientes():
+    return get_all_clientes()
+
+
+@router.get("/{cliente_id}", response_model=ClienteResponse)
+def obtener_cliente(cliente_id: int):
+    cliente = get_cliente_by_id(cliente_id)
+
+    if not cliente:
+        raise HTTPException(
+            status_code=404,
+            detail="Cliente no encontrado"
+        )
+
+    return cliente
+
+# =========================
+# POST /clientes
+# =========================
+@router.post(
+    "/",
+    response_model=ClienteResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def crear_cliente(cliente: ClienteCreate):
+    try:
+        nuevo_id = create_cliente(cliente.model_dump())
+
+        cliente_creado = get_cliente_by_id(nuevo_id)
+        return cliente_creado
+
+    except Error as e:
+        # MySQL error code 1062 = Duplicate entry (email UNIQUE)
+        if e.errno == 1062:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe un cliente con ese email"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al crear el cliente"
+        )
+    
+# =========================
+# PUT /clientes/{id}
+# =========================
+@router.put(
+    "/{cliente_id}",
+    response_model=ClienteResponse,
+    status_code=status.HTTP_200_OK
+)
+def actualizar_cliente(cliente_id: int, cliente: ClienteUpdate):
+    # 1️⃣ Verificamos que el cliente exista
+    existente = get_cliente_by_id(cliente_id)
+    if not existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado"
+        )
+
+    try:
+        actualizado = update_cliente(cliente_id, cliente.model_dump())
+
+        if not actualizado:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cliente no encontrado"
+            )
+
+        return get_cliente_by_id(cliente_id)
+
+    except Error as e:
+        # Email duplicado
+        if e.errno == 1062:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe otro cliente con ese email"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al actualizar el cliente"
+        )
+
+
+# =========================
+# DELETE /clientes/{id}
+# =========================
+@router.delete(
+    "/{cliente_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def eliminar_cliente(cliente_id: int):
+    # Verificar que el cliente existe
+    existente = get_cliente_by_id(cliente_id)
+    if not existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado"
+        )
+
+    try:
+        eliminado = delete_cliente(cliente_id)
+        
+        if not eliminado:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cliente no encontrado"
+            )
+        
+        return None
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al eliminar el cliente"
+        )
+
+```
+
+app/routers/clientes_old.py
+-----
+```python
+# app/routers/clientes.py
+
+from fastapi import APIRouter, HTTPException, status
+from typing import List
+from mysql.connector import Error
+
+from app.schemas.cliente import (
+    ClienteResponse,
+    ClienteCreate,
+    ClienteUpdate
+)
+from app.database import (
+    get_all_clientes,
+    get_cliente_by_id,
+    create_cliente,
+    update_cliente,
+    delete_cliente
+)
+
+router = APIRouter(
+    prefix="/clientes",
+    tags=["Clientes"]
+)
+
+
+@router.get("/", response_model=List[ClienteResponse])
+def listar_clientes():
+    return get_all_clientes()
+
+
+@router.get("/{cliente_id}", response_model=ClienteResponse)
+def obtener_cliente(cliente_id: int):
+    cliente = get_cliente_by_id(cliente_id)
+
+    if not cliente:
+        raise HTTPException(
+            status_code=404,
+            detail="Cliente no encontrado"
+        )
+
+    return cliente
+
+# =========================
+# POST /clientes
+# =========================
+@router.post(
+    "/",
+    response_model=ClienteResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def crear_cliente(cliente: ClienteCreate):
+    try:
+        nuevo_id = create_cliente(cliente.model_dump())
+
+        cliente_creado = get_cliente_by_id(nuevo_id)
+        return cliente_creado
+
+    except Error as e:
+        # MySQL error code 1062 = Duplicate entry (email UNIQUE)
+        if e.errno == 1062:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe un cliente con ese email"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al crear el cliente"
+        )
+    
+# =========================
+# PUT /clientes/{id}
+# =========================
+@router.put(
+    "/{cliente_id}",
+    response_model=ClienteResponse,
+    status_code=status.HTTP_200_OK
+)
+def actualizar_cliente(cliente_id: int, cliente: ClienteUpdate):
+    # 1️⃣ Verificamos que el cliente exista
+    existente = get_cliente_by_id(cliente_id)
+    if not existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cliente no encontrado"
+        )
+
+    try:
+        actualizado = update_cliente(cliente_id, cliente.model_dump())
+
+        if not actualizado:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cliente no encontrado"
+            )
+
+        return get_cliente_by_id(cliente_id)
+
+    except Error as e:
+        # Email duplicado
+        if e.errno == 1062:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ya existe otro cliente con ese email"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al actualizar el cliente"
+        )
+```
+
+app/schemas/cliente.py
+-----
+```python
+# app/schemas/cliente.py
+
+from pydantic import BaseModel, EmailStr, field_validator
+from typing import Optional
+import re
+
+
+# =========================
+# Modelo base con validaciones (idéntico al monolito)
+# =========================
+class ClienteBase(BaseModel):
+    nombre: str
+    apellido: str
+    email: EmailStr
+    telefono: Optional[str] = None
+    direccion: Optional[str] = None
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def validar_nombre_apellido(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("El campo no puede estar vacío")
+
+        v = v.strip()
+
+        if len(v) < 2:
+            raise ValueError("Debe tener al menos 2 caracteres")
+
+        if len(v) > 50:
+            raise ValueError("No puede exceder 50 caracteres")
+
+        # Solo letras, espacios, tildes y caracteres del español
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$", v):
+            raise ValueError("Solo se permiten letras y espacios")
+
+        return v.title()
+
+    @field_validator("telefono")
+    @classmethod
+    def validar_telefono(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v.strip() == "":
+            return None
+
+        v = v.strip()
+
+        telefono_limpio = re.sub(r"[\s\-\(\)]", "", v)
+
+        if not re.match(r"^\+?\d{7,15}$", telefono_limpio):
+            raise ValueError(
+                "Formato de teléfono inválido. Debe contener entre 7 y 15 dígitos"
+            )
+
+        return v
+
+    @field_validator("direccion")
+    @classmethod
+    def validar_direccion(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v.strip() == "":
+            return None
+
+        v = v.strip()
+
+        if len(v) > 200:
+            raise ValueError("La dirección no puede exceder 200 caracteres")
+
+        return v
+
+
+# =========================
+# Modelo para datos históricos (BD)
+# 👉 sin validaciones estrictas
+# =========================
+class ClienteDB(BaseModel):
+    id: int
+    nombre: str
+    apellido: str
+    email: str
+    telefono: Optional[str] = None
+    direccion: Optional[str] = None
+
+
+# =========================
+# Modelo para creación (POST)
+# =========================
+class ClienteCreate(ClienteBase):
+    pass
+
+
+# =========================
+# Modelo para actualización (PUT)
+# =========================
+class ClienteUpdate(BaseModel):
+    nombre: str
+    apellido: str
+    email: EmailStr
+    telefono: Optional[str] = None
+    direccion: Optional[str] = None
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def validar_nombre_apellido(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("El campo no puede estar vacío")
+
+        v = v.strip()
+
+        if len(v) < 2:
+            raise ValueError("Debe tener al menos 2 caracteres")
+
+        if len(v) > 50:
+            raise ValueError("No puede exceder 50 caracteres")
+
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$", v):
+            raise ValueError("Solo se permiten letras y espacios")
+
+        return v.title()
+
+    @field_validator("telefono")
+    @classmethod
+    def validar_telefono(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "" or (isinstance(v, str) and v.strip() == ""):
+            return None
+
+        v = v.strip()
+        telefono_limpio = re.sub(r"[\s\-\(\)]", "", v)
+
+        if not re.match(r"^\+?\d{7,15}$", telefono_limpio):
+            raise ValueError(
+                "Formato de teléfono inválido. Debe contener entre 7 y 15 dígitos"
+            )
+
+        return v
+
+    @field_validator("direccion")
+    @classmethod
+    def validar_direccion(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "" or (isinstance(v, str) and v.strip() == ""):
+            return None
+
+        v = v.strip()
+
+        if len(v) > 200:
+            raise ValueError("La dirección no puede exceder 200 caracteres")
+
+        return v
+
+
+# =========================
+# Modelo de respuesta API
+# =========================
+class ClienteResponse(ClienteBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+```
+
+.env.back
+-----
+```
+DB_HOST=localhost
+DB_USER=
+DB_PASSWORD=
+DB_NAME=clientes_db
+```
+
+.gitignore
+-----
+```
+
+```
+
+docs/init_db.sql
+-----
+```sql
+-- =========================================================
+-- SCRIPT INICIALIZADOR DE BASE DE DATOS PARA EL PROYECTO CLIENTES
+-- Autor: Juan Carlos Sulbarán González
+-- Fecha: 2025-11-12
+-- Descripción:
+--   Este script elimina la base de datos si ya existe,
+--   la vuelve a crear desde cero y define la tabla 'clientes'.
+-- =========================================================
+
+-- 1️⃣ Borrar la base de datos si ya existe
+DROP DATABASE IF EXISTS clientes_db;
+
+-- 2️⃣ Crear una nueva base de datos
+CREATE DATABASE clientes_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+-- 3️⃣ Seleccionar la base de datos recién creada
+USE clientes_db;
+
+-- 4️⃣ Crear tabla 'clientes'
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    telefono VARCHAR(50),
+    direccion VARCHAR(255)
+);
+
+-- 5️⃣ Insertar algunos registros de ejemplo
+INSERT INTO clientes (nombre, apellido, email, telefono, direccion) VALUES
+('Juan', 'Pérez', 'juan.perez@example.com', '555-0101', 'Calle 123, Ciudad'),
+('María', 'García', 'maria.garcia@example.com', '555-0102', 'Avenida 456, Ciudad'),
+('Carlos', 'Rodríguez', 'carlos.rodriguez@example.com', '555-0103', 'Plaza 789, Ciudad'),
+('Ana', 'Martínez', 'ana.martinez@example.com', '555-0104', 'Paseo 321, Ciudad'),
+('Luis', 'López', 'luis.lopez@example.com', '555-0105', 'Boulevard 654, Ciudad');
+
+-- 6️⃣ Confirmar
+SELECT * FROM clientes;
+
+```
+
