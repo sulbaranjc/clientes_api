@@ -1,9 +1,10 @@
 # app/routers/clientes.py
 
-from fastapi import APIRouter, HTTPException, status
-from typing import List
+from fastapi import APIRouter, HTTPException, status, Depends
+from typing import List, cast
 from mysql.connector import Error
 
+from app.auth.deps import require_admin
 from app.schemas.cliente import (
     ClienteResponse,
     ClienteCreate,
@@ -22,38 +23,47 @@ router = APIRouter(
     tags=["Clientes"]
 )
 
-
+# =========================
+# GET /clientes (PÚBLICO)
+# =========================
 @router.get("/", response_model=List[ClienteResponse])
 def listar_clientes():
     return get_all_clientes()
 
 
+# =========================
+# GET /clientes/{id} (PÚBLICO)
+# =========================
 @router.get("/{cliente_id}", response_model=ClienteResponse)
 def obtener_cliente(cliente_id: int):
     cliente = get_cliente_by_id(cliente_id)
 
     if not cliente:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Cliente no encontrado"
         )
 
     return cliente
 
+
 # =========================
-# POST /clientes
+# POST /clientes (ADMIN)
 # =========================
 @router.post(
     "/",
     response_model=ClienteResponse,
     status_code=status.HTTP_201_CREATED
 )
-def crear_cliente(cliente: ClienteCreate):
+def crear_cliente(
+    cliente: ClienteCreate,
+    _: dict = Depends(require_admin)
+):
     try:
         nuevo_id = create_cliente(cliente.model_dump())
 
-        cliente_creado = get_cliente_by_id(nuevo_id)
-        return cliente_creado
+        # Cast explícito para el tipador (create_cliente devuelve el id)
+        return get_cliente_by_id(cast(int, nuevo_id))
 
     except Error as e:
         # MySQL error code 1062 = Duplicate entry (email UNIQUE)
@@ -67,17 +77,21 @@ def crear_cliente(cliente: ClienteCreate):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al crear el cliente"
         )
-    
+
+
 # =========================
-# PUT /clientes/{id}
+# PUT /clientes/{id} (ADMIN)
 # =========================
 @router.put(
     "/{cliente_id}",
     response_model=ClienteResponse,
     status_code=status.HTTP_200_OK
 )
-def actualizar_cliente(cliente_id: int, cliente: ClienteUpdate):
-    # 1️⃣ Verificamos que el cliente exista
+def actualizar_cliente(
+    cliente_id: int,
+    cliente: ClienteUpdate,
+    _: dict = Depends(require_admin)
+):
     existente = get_cliente_by_id(cliente_id)
     if not existente:
         raise HTTPException(
@@ -97,7 +111,6 @@ def actualizar_cliente(cliente_id: int, cliente: ClienteUpdate):
         return get_cliente_by_id(cliente_id)
 
     except Error as e:
-        # Email duplicado
         if e.errno == 1062:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -111,14 +124,16 @@ def actualizar_cliente(cliente_id: int, cliente: ClienteUpdate):
 
 
 # =========================
-# DELETE /clientes/{id}
+# DELETE /clientes/{id} (ADMIN)
 # =========================
 @router.delete(
     "/{cliente_id}",
     status_code=status.HTTP_204_NO_CONTENT
 )
-def eliminar_cliente(cliente_id: int):
-    # Verificar que el cliente existe
+def eliminar_cliente(
+    cliente_id: int,
+    _: dict = Depends(require_admin)
+):
     existente = get_cliente_by_id(cliente_id)
     if not existente:
         raise HTTPException(
@@ -128,16 +143,16 @@ def eliminar_cliente(cliente_id: int):
 
     try:
         eliminado = delete_cliente(cliente_id)
-        
+
         if not eliminado:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Cliente no encontrado"
             )
-        
+
         return None
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al eliminar el cliente"

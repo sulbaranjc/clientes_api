@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import clientes
+from app.routers import clientes, auth
 
 app = FastAPI(
     title="API de Clientes",
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(clientes.router)
+app.include_router(auth.router)
 
 
 @app.get("/")

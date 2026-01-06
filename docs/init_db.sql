@@ -77,8 +77,18 @@ INSERT INTO clientes (nombre, apellido, email, telefono, direccion) VALUES
 ('Ana', 'Martínez', 'ana.martinez@example.com', '555-0104', 'Paseo 321, Ciudad'),
 ('Luis', 'López', 'luis.lopez@example.com', '555-0105', 'Boulevard 654, Ciudad');
 
+-- admin
+INSERT INTO usuarios (username, email, password_hash, rol_id)
+VALUES ('admin', 'admin@test.com', '$2b$12$1FERac3oRY3l2090Xl7EGuDzO4zUe9Nyowy3XLaZ2t6znkmwB9I76', 1);
+
+-- lector
+INSERT INTO usuarios (username, email, password_hash, rol_id)
+VALUES ('lector', 'lector@test.com', '$2b$12$IBWpsxUBSMIhWALA3L3Fk.97qcrHZ7xEpbkyFmaBmBtn1hca/j3Em', 2);
+
 -- =========================================================
 -- 9️⃣ Verificación
 -- =========================================================
 -- SELECT * FROM clientes;
 -- SELECT * FROM roles;
+SELECT * FROM usuarios;
+SELECT username, password_hash, activo FROM usuarios;
