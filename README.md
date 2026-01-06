@@ -1,100 +1,127 @@
-# 🚀 API REST de Gestión de Clientes - Backend con FastAPI
+# 🚀 API REST de Gestión de Clientes con Autenticación JWT
+
+> **Proyecto Educativo** - FastAPI + MySQL + JWT Authentication
+> 
+> Última actualización: 6 de enero de 2026
 
 ## 📋 Tabla de Contenidos
-1. [Descripción del Proyecto](#-descripción-del-proyecto)
-2. [Objetivos Pedagógicos](#-objetivos-pedagógicos)
+
+1. [Descripción General](#-descripción-general)
+2. [Características Principales](#-características-principales)
 3. [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
 4. [Tecnologías Utilizadas](#-tecnologías-utilizadas)
 5. [Estructura del Proyecto](#-estructura-del-proyecto)
-6. [Conceptos Clave](#-conceptos-clave)
-7. [Requisitos Previos](#-requisitos-previos)
-8. [Instalación y Configuración](#-instalación-y-configuración)
-9. [Ejecución del Proyecto](#-ejecución-del-proyecto)
-10. [API Endpoints](#-api-endpoints)
-11. [Validaciones Implementadas](#-validaciones-implementadas)
-12. [Manejo de Errores](#-manejo-de-errores)
-13. [Buenas Prácticas Aplicadas](#-buenas-prácticas-aplicadas)
-14. [Ejercicios Propuestos](#-ejercicios-propuestos)
-15. [Recursos Adicionales](#-recursos-adicionales)
+6. [Requisitos Previos](#-requisitos-previos)
+7. [Instalación y Configuración](#-instalación-y-configuración)
+8. [Ejecución del Proyecto](#-ejecución-del-proyecto)
+9. [API Endpoints](#-api-endpoints)
+10. [Sistema de Autenticación](#-sistema-de-autenticación)
+11. [Control de Acceso Basado en Roles](#-control-de-acceso-basado-en-roles)
+12. [Validaciones y Schemas](#-validaciones-y-schemas)
+13. [Base de Datos](#-base-de-datos)
+14. [Documentación Interactiva](#-documentación-interactiva)
+15. [Buenas Prácticas Implementadas](#-buenas-prácticas-implementadas)
+16. [Solución de Problemas](#-solución-de-problemas)
 
 ---
 
-## 📖 Descripción del Proyecto
+## 📖 Descripción General
 
-Este proyecto es una **API REST** desarrollada con **FastAPI** para la gestión de clientes. Forma parte de una arquitectura de aplicación moderna separando el backend del frontend, siguiendo el patrón de arquitectura de microservicios.
+Este proyecto es una **API REST profesional** desarrollada con **FastAPI** que implementa un sistema completo de gestión de clientes con autenticación JWT y control de acceso basado en roles. 
 
 ### 🎯 Finalidad Educativa
 
-Este proyecto está diseñado específicamente para estudiantes de **Desarrollo de Aplicaciones Web** y **Desarrollo de Aplicaciones Multiplataforma**, con el objetivo de:
+Diseñado específicamente para estudiantes de **Desarrollo de Aplicaciones Web** y **Desarrollo de Aplicaciones Multiplataforma**, este proyecto demuestra:
 
-- Comprender la arquitectura de aplicaciones modernas (Backend separado del Frontend)
-- Aprender a desarrollar APIs REST profesionales
-- Implementar operaciones CRUD completas
-- Aplicar validaciones de datos robustas
-- Manejar errores de forma profesional
-- Conectar aplicaciones Python con bases de datos MySQL
+✅ **Arquitectura moderna de APIs REST**
+- Separación completa Backend/Frontend
+- Arquitectura en capas (Layered Architecture)
+- Diseño modular y escalable
+
+✅ **Seguridad implementada profesionalmente**
+- Autenticación OAuth2 con JWT
+- Hash de contraseñas con bcrypt
+- Control de acceso basado en roles (RBAC)
+- Protección de endpoints sensibles
+
+✅ **Mejores prácticas de desarrollo**
+- Validación robusta de datos con Pydantic
+- Manejo apropiado de errores HTTP
+- Documentación automática con OpenAPI/Swagger
+- Variables de entorno para configuración
 
 ---
 
-## 🎓 Objetivos Pedagógicos
+## ✨ Características Principales
 
-Al finalizar el estudio de este proyecto, los alumnos serán capaces de:
+### 🔐 Autenticación y Autorización
+- **Login con JWT**: Sistema OAuth2 Password Flow compatible con Swagger UI
+- **Tokens de acceso**: JWT firmados con expiración configurable
+- **Dos roles de usuario**: 
+  - `admin`: CRUD completo sobre clientes
+  - `lector`: Solo lectura de clientes
+- **Protección de endpoints**: Middleware de autenticación y autorización
 
-1. **Comprender arquitecturas modernas**: Diferenciar entre arquitecturas monolíticas y basadas en APIs
-2. **Desarrollar APIs REST**: Crear endpoints siguiendo las convenciones HTTP
-3. **Implementar validaciones**: Asegurar la integridad de los datos mediante Pydantic
-4. **Gestionar bases de datos**: Conectar y operar con MySQL desde Python
-5. **Manejar errores**: Implementar respuestas HTTP apropiadas para diferentes situaciones
-6. **Documentar automáticamente**: Aprovechar las capacidades de FastAPI para documentación interactiva
-7. **Aplicar buenas prácticas**: Organizar código de forma modular y mantenible
+### 📊 Gestión de Clientes
+- **CRUD completo**: Crear, leer, actualizar y eliminar clientes
+- **Validaciones exhaustivas**: Email, teléfono, nombres con regex
+- **Endpoints públicos**: Lectura de clientes sin autenticación
+- **Endpoints protegidos**: Escritura/modificación requiere rol admin
+
+### 🛠️ Características Técnicas
+- **CORS configurado**: Listo para integración con frontends
+- **Manejo de errores**: Respuestas HTTP apropiadas para cada situación
+- **Documentación interactiva**: Swagger UI y ReDoc automáticos
+- **Base de datos MySQL**: Con índices y restricciones apropiadas
 
 ---
 
 ## 🏗️ Arquitectura del Proyecto
 
-Este proyecto implementa una **arquitectura en capas** (Layered Architecture):
-
 ```
-┌─────────────────────────────────────┐
-│      CLIENTE (Frontend)             │
-│   (React, Vue, Angular, etc.)       │
-└─────────────┬───────────────────────┘
-              │ HTTP/JSON
-              ↓
-┌─────────────────────────────────────┐
-│      CAPA DE PRESENTACIÓN           │
-│     (Routers - Endpoints)           │
-│  • GET /clientes                    │
-│  • POST /clientes                   │
-│  • PUT /clientes/{id}               │
-│  • DELETE /clientes/{id}            │
-└─────────────┬───────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────┐
-│      CAPA DE VALIDACIÓN             │
-│    (Schemas - Pydantic Models)      │
-│  • ClienteCreate                    │
-│  • ClienteUpdate                    │
-│  • ClienteResponse                  │
-└─────────────┬───────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────┐
-│      CAPA DE LÓGICA                 │
-│    (Database Functions)             │
-│  • get_all_clientes()               │
-│  • create_cliente()                 │
-│  • update_cliente()                 │
-│  • delete_cliente()                 │
-└─────────────┬───────────────────────┘
-              │
-              ↓
-┌─────────────────────────────────────┐
-│      CAPA DE DATOS                  │
-│        (MySQL Database)             │
-│     Tabla: clientes                 │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│         CLIENTE (Frontend)                   │
+│    React / Vue / Angular / Mobile            │
+└────────────────┬─────────────────────────────┘
+                 │ HTTP/JSON + JWT Bearer
+                 ↓
+┌──────────────────────────────────────────────┐
+│    CAPA DE PRESENTACIÓN (Routers)            │
+│  ┌─────────────┐      ┌──────────────┐      │
+│  │ Auth Router │      │ Clientes     │      │
+│  │ /auth/login │      │ Router       │      │
+│  └─────────────┘      │ /clientes    │      │
+│                       └──────────────┘      │
+└────────────────┬─────────────────────────────┘
+                 │
+┌────────────────┴─────────────────────────────┐
+│    CAPA DE SEGURIDAD (Auth)                  │
+│  ┌──────────────┐  ┌────────────────┐       │
+│  │ JWT Handler  │  │ Dependencies   │       │
+│  │ • create     │  │ • require_admin│       │
+│  │ • decode     │  │ • get_current  │       │
+│  └──────────────┘  └────────────────┘       │
+└────────────────┬─────────────────────────────┘
+                 │
+┌────────────────┴─────────────────────────────┐
+│    CAPA DE VALIDACIÓN (Schemas)              │
+│  • ClienteCreate    • ClienteUpdate          │
+│  • ClienteResponse  • EmailStr               │
+│  • Field validators con regex                │
+└────────────────┬─────────────────────────────┘
+                 │
+┌────────────────┴─────────────────────────────┐
+│    CAPA DE LÓGICA (Database + Repository)    │
+│  ┌────────────────┐  ┌──────────────┐       │
+│  │ database.py    │  │ users_repo   │       │
+│  │ • CRUD clientes│  │ • get_user   │       │
+│  └────────────────┘  └──────────────┘       │
+└────────────────┬─────────────────────────────┘
+                 │
+┌────────────────┴─────────────────────────────┐
+│    CAPA DE DATOS (MySQL)                     │
+│  • clientes    • usuarios    • roles         │
+└──────────────────────────────────────────────┘
 ```
 
 ### Ventajas de esta Arquitectura:
@@ -112,14 +139,557 @@ Este proyecto implementa una **arquitectura en capas** (Layered Architecture):
 | Tecnología | Versión | Propósito |
 |-----------|---------|-----------|
 | **Python** | 3.12+ | Lenguaje de programación principal |
-| **FastAPI** | 0.128.0 | Framework web moderno para crear APIs |
+| **FastAPI** | 0.128.0 | Framework web moderno y de alto rendimiento |
 | **Pydantic** | 2.12.5 | Validación de datos y serialización |
-| **MySQL Connector** | 9.5.0 | Conexión con base de datos MySQL |
+| **MySQL Connector** | 9.5.0 | Driver para conexión con MySQL |
 | **Uvicorn** | 0.40.0 | Servidor ASGI para ejecutar FastAPI |
 | **Python-dotenv** | 1.2.1 | Gestión de variables de entorno |
 | **Email-validator** | 2.3.0 | Validación de direcciones de email |
+| **Python-Jose** | 3.5.0 | Generación y verificación de JWT |
+| **Passlib** | 1.7.4 | Hash seguro de contraseñas |
+| **Bcrypt** | 3.2.2 | Algoritmo de hashing para passwords |
+| **Python-multipart** | 0.0.21 | Procesamiento de datos de formulario |
+
+### Dependencias de Desarrollo
+- **Black** | 25.12.0 | Formateador de código Python
 
 ---
+
+## 📁 Estructura del Proyecto
+
+```
+clientes_api/
+│
+├── app/
+│   ├── __init__.py
+│   ├── main.py                 # Punto de entrada de la aplicación
+│   │
+│   ├── core/
+│   │   └── config.py           # Configuración centralizada (SECRET_KEY, JWT)
+│   │
+│   ├── auth/
+│   │   ├── jwt.py              # Creación y decodificación de JWT
+│   │   ├── passwords.py        # Hash y verificación de contraseñas
+│   │   └── deps.py             # Dependencias de autenticación/autorización
+│   │
+│   ├── routers/
+│   │   ├── auth.py             # Endpoint de login OAuth2
+│   │   └── clientes.py         # CRUD de clientes (público + protegido)
+│   │
+│   ├── schemas/
+│   │   ├── auth.py             # Schemas de autenticación
+│   │   └── cliente.py          # Schemas de validación de clientes
+│   │
+│   ├── repository/
+│   │   └── users_repo.py       # Consultas de usuarios para auth
+│   │
+│   └── database.py             # Funciones CRUD y conexión MySQL
+│
+├── docs/
+│   └── init_db.sql             # Script de inicialización de BD
+│
+├── .env                        # Variables de entorno (NO INCLUIR EN GIT)
+├── .env.example                # Plantilla de variables de entorno
+├── requirements.txt            # Dependencias del proyecto
+└── README.md                   # Este archivo
+
+```
+
+---
+
+## 📋 Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- ✅ **Python 3.12 o superior**
+  ```bash
+  python --version
+  ```
+
+- ✅ **MySQL Server 8.0 o superior**
+  ```bash
+  mysql --version
+  ```
+
+- ✅ **pip** (gestor de paquetes de Python)
+  ```bash
+  pip --version
+  ```
+
+- ✅ **Git** (opcional, para clonar el repositorio)
+
+---
+
+## ⚙️ Instalación y Configuración
+
+### 1️⃣ Clonar o Descargar el Proyecto
+
+```bash
+git clone <url-del-repositorio>
+cd clientes_api
+```
+
+### 2️⃣ Crear y Activar Entorno Virtual
+
+**Linux/Mac:**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows:**
+```cmd
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### 3️⃣ Instalar Dependencias
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4️⃣ Configurar Base de Datos MySQL
+
+**a) Crear la base de datos:**
+```bash
+mysql -u root -p < docs/init_db.sql
+```
+
+**b) Verificar que se crearon las tablas:**
+```bash
+mysql -u root -p
+```
+```sql
+USE clientes_db;
+SHOW TABLES;
+-- Debe mostrar: clientes, roles, usuarios
+```
+
+### 5️⃣ Configurar Variables de Entorno
+
+**a) Crear archivo `.env` en la raíz del proyecto:**
+```bash
+cp .env.example .env
+```
+
+**b) Editar `.env` con tus credenciales:**
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=tu_password_mysql
+DB_NAME=clientes_db
+
+# JWT Configuration
+SECRET_KEY=tu_clave_secreta_super_segura_aqui_cambiala
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
+
+> ⚠️ **IMPORTANTE**: Genera una SECRET_KEY única usando:
+> ```bash
+> python -c "import secrets; print(secrets.token_hex(32))"
+> ```
+
+---
+
+## 🚀 Ejecución del Proyecto
+
+### Modo Desarrollo (con auto-reload)
+
+```bash
+uvicorn app.main:app --reload
+```
+
+La API estará disponible en: **http://127.0.0.1:8000**
+
+### Configurar Alias (Opcional)
+
+Si usas Linux/Mac, puedes crear un alias en tu shell:
+
+**Bash (~/.bashrc):**
+```bash
+alias py-uvi-app="uvicorn app.main:app --reload"
+```
+
+**Luego simplemente ejecuta:**
+```bash
+py-uvi-app
+```
+
+---
+
+## 📍 API Endpoints
+
+### 🔐 Autenticación
+
+| Método | Endpoint | Descripción | Auth | Rol |
+|--------|----------|-------------|------|-----|
+| `POST` | `/auth/login` | Login y generación de JWT | No | - |
+
+**Request (Form Data):**
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+### 👥 Gestión de Clientes
+
+| Método | Endpoint | Descripción | Auth | Rol |
+|--------|----------|-------------|------|-----|
+| `GET` | `/clientes/` | Listar todos los clientes | No | - |
+| `GET` | `/clientes/{id}` | Obtener cliente por ID | No | - |
+| `POST` | `/clientes/` | Crear nuevo cliente | Sí | Admin |
+| `PUT` | `/clientes/{id}` | Actualizar cliente | Sí | Admin |
+| `DELETE` | `/clientes/{id}` | Eliminar cliente | Sí | Admin |
+
+### Ejemplos de Uso
+
+**1. Listar clientes (público):**
+```bash
+curl http://127.0.0.1:8000/clientes/
+```
+
+**2. Login:**
+```bash
+curl -X POST "http://127.0.0.1:8000/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin&password=admin123"
+```
+
+**3. Crear cliente (requiere token):**
+```bash
+curl -X POST "http://127.0.0.1:8000/clientes/" \
+  -H "Authorization: Bearer TU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Pedro",
+    "apellido": "González",
+    "email": "pedro@example.com",
+    "telefono": "+34612345678",
+    "direccion": "Calle Principal 123"
+  }'
+```
+
+---
+
+## 🔐 Sistema de Autenticación
+
+### Flujo de Autenticación
+
+1. **Login**: Usuario envía `username` y `password` a `/auth/login`
+2. **Verificación**: Sistema verifica credenciales contra la BD (hash bcrypt)
+3. **Generación JWT**: Se crea un token firmado con información del usuario
+4. **Respuesta**: Cliente recibe el token
+5. **Uso**: Cliente incluye token en header `Authorization: Bearer <token>`
+6. **Validación**: Cada request protegido verifica y decodifica el JWT
+
+### Estructura del JWT
+
+```json
+{
+  "sub": "admin",           // username
+  "role": "admin",          // rol del usuario
+  "exp": 1704585600         // timestamp de expiración
+}
+```
+
+### Implementación de Seguridad
+
+**Hash de contraseñas:**
+```python
+# app/auth/passwords.py
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+```
+
+**Creación de JWT:**
+```python
+# app/auth/jwt.py
+from jose import jwt
+from datetime import datetime, timedelta
+
+def create_access_token(data: dict) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=60)
+    to_encode = data.copy()
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
+```
+
+---
+
+## 🛡️ Control de Acceso Basado en Roles
+
+### Roles Disponibles
+
+| Rol | Descripción | Permisos |
+|-----|-------------|----------|
+| **admin** | Administrador | CRUD completo de clientes |
+| **lector** | Solo lectura | Solo GET endpoints |
+
+### Usuarios de Prueba
+
+| Username | Password | Rol |
+|----------|----------|-----|
+| `admin` | `admin123` | admin |
+| `lector` | `lector123` | lector |
+
+### Implementación de Autorización
+
+**Dependencia `require_admin`:**
+```python
+# app/auth/deps.py
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user["role"] != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Permisos insuficientes"
+        )
+    return user
+```
+
+**Uso en endpoints protegidos:**
+```python
+# app/routers/clientes.py
+@router.post("/", dependencies=[Depends(require_admin)])
+def crear_cliente(cliente: ClienteCreate):
+    # Solo usuarios admin pueden ejecutar esto
+    pass
+```
+
+---
+
+## ✅ Validaciones y Schemas
+
+### Schema de Cliente
+
+```python
+# app/schemas/cliente.py
+class ClienteCreate(BaseModel):
+    nombre: str          # 2-50 caracteres, solo letras
+    apellido: str        # 2-50 caracteres, solo letras
+    email: EmailStr      # Validación automática de email
+    telefono: str | None # Formato internacional (7-15 dígitos)
+    direccion: str | None
+```
+
+### Validaciones Implementadas
+
+**1. Nombres y Apellidos:**
+- Mínimo 2 caracteres, máximo 50
+- Solo letras, espacios, tildes y caracteres españoles (ñ, ü)
+- Auto-capitalización (Title Case)
+- Regex: `^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$`
+
+**2. Email:**
+- Validación completa con `EmailStr` de Pydantic
+- Verifica formato y dominio válido
+
+**3. Teléfono:**
+- Formato internacional permitido
+- 7-15 dígitos (puede incluir +, espacios, guiones, paréntesis)
+- Se limpia automáticamente antes de validar
+
+**4. Dirección:**
+- Opcional
+- Máximo 255 caracteres
+
+### Ejemplo de Validación Exitosa
+
+```json
+{
+  "nombre": "María José",
+  "apellido": "García López",
+  "email": "maria.garcia@example.com",
+  "telefono": "+34 612 345 678",
+  "direccion": "Av. Principal 123, Madrid"
+}
+```
+
+### Ejemplo de Error de Validación
+
+```json
+{
+  "nombre": "M",  // ❌ Menos de 2 caracteres
+  "apellido": "García123",  // ❌ Contiene números
+  "email": "no-es-email",  // ❌ Email inválido
+  "telefono": "123"  // ❌ Menos de 7 dígitos
+}
+```
+
+**Respuesta HTTP 422:**
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "nombre"],
+      "msg": "Debe tener al menos 2 caracteres",
+      "type": "value_error"
+    }
+  ]
+}
+```
+
+---
+
+## 🗄️ Base de Datos
+
+### Esquema de Tablas
+
+**Tabla `clientes`:**
+```sql
+CREATE TABLE clientes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  apellido VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  telefono VARCHAR(50),
+  direccion VARCHAR(255)
+);
+```
+
+**Tabla `roles`:**
+```sql
+CREATE TABLE roles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL UNIQUE,
+  descripcion VARCHAR(150)
+);
+```
+
+**Tabla `usuarios`:**
+```sql
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  rol_id INT NOT NULL,
+  activo TINYINT NOT NULL DEFAULT 1,
+  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (rol_id) REFERENCES roles(id)
+);
+```
+
+### Datos Iniciales
+
+El script `docs/init_db.sql` incluye:
+- ✅ 5 clientes de ejemplo
+- ✅ 2 roles (admin, lector)
+- ✅ 2 usuarios de prueba con contraseñas hasheadas
+
+---
+
+## 📚 Documentación Interactiva
+
+FastAPI genera automáticamente documentación interactiva:
+
+### Swagger UI (OpenAPI)
+**URL:** http://127.0.0.1:8000/docs
+
+Características:
+- ✅ Interfaz visual para probar endpoints
+- ✅ Botón "Authorize" para login con JWT
+- ✅ Generación automática de requests
+- ✅ Visualización de respuestas en tiempo real
+
+### ReDoc
+**URL:** http://127.0.0.1:8000/redoc
+
+Características:
+- ✅ Documentación clara y organizada
+- ✅ Exportación a PDF
+- ✅ Búsqueda de endpoints
+
+### Cómo Usar Swagger UI con Autenticación
+
+1. Abrir http://127.0.0.1:8000/docs
+2. Expandir endpoint `POST /auth/login`
+3. Click en "Try it out"
+4. Ingresar credenciales (`admin` / `admin123`)
+5. Click "Execute"
+6. Copiar el `access_token` de la respuesta
+7. Click en botón "Authorize" (🔒 arriba a la derecha)
+8. Pegar token en el campo y click "Authorize"
+9. Ahora puedes probar endpoints protegidos
+
+---
+
+## ✨ Buenas Prácticas Implementadas
+
+### 1. Arquitectura en Capas
+- Separación clara de responsabilidades
+- Código modular y reutilizable
+- Fácil de testear y mantener
+
+### 2. Validación de Datos
+- Uso de Pydantic para validación automática
+- Validators personalizados con regex
+- Mensajes de error claros y específicos
+
+### 3. Seguridad
+- ✅ Contraseñas hasheadas con bcrypt (nunca en texto plano)
+- ✅ JWT firmados con SECRET_KEY segura
+- ✅ Tokens con expiración configurable
+- ✅ Control de acceso basado en roles
+- ✅ Variables sensibles en `.env` (excluidas de git)
+
+### 4. Manejo de Errores
+- Códigos HTTP apropiados (200, 201, 401, 403, 404, 409, 422, 500)
+- Mensajes descriptivos para el cliente
+- Captura de errores específicos de MySQL
+
+### 5. CORS Configurado
+- Preparado para integración con frontends
+- Configurable para producción
+
+### 6. Documentación
+- Código autodocumentado con docstrings
+- OpenAPI/Swagger automático
+- README completo y actualizado
+
+### 7. Variables de Entorno
+- Configuración centralizada en `config.py`
+- Uso de `.env` para secretos
+- `.env.example` como plantilla
+
+---
+
+## 🔧 Solución de Problemas
+
+### Error: "python-multipart" requerido
+
+**Problema:**
+```
+RuntimeError: Form data requires "python-multipart" to be installed
+```
+
+**Solución:**
+```bash
+pip install python-multipart
+```
+
+### Error: Conexión a MySQL rechazada
+
+**Problema:**
+```
+Error al conectar a MySQL: Access denied
+```
+
+**Solución:
 
 ## 📁 Estructura del Proyecto
 
@@ -227,124 +797,272 @@ Pydantic es una librería para validación de datos usando type hints de Python.
 - Documentación automática en Swagger
 
 ### 5️⃣ Dependency Injection
-FastAPI usa inyección de dependencias para:
-- Conexiones a base de datos
-- Autenticación
-- Validaciones comunes
 
-### 6️⃣ CORS (Cross-Origin Resource Sharing)
-Permite que el frontend (en otro dominio/puerto) pueda hacer peticiones a la API.
+**Solución:**
+1. Verificar credenciales en el archivo `.env`
+2. Verificar que MySQL esté corriendo:
+   ```bash
+   sudo systemctl status mysql
+   ```
+3. Verificar que la base de datos `clientes_db` existe:
+   ```bash
+   mysql -u root -p -e "SHOW DATABASES;"
+   ```
 
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # En producción: especificar dominios
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+### Error: SECRET_KEY no definida
+
+**Problema:**
+```
+RuntimeError: SECRET_KEY no está definida en el archivo .env
+```
+
+**Solución:**
+1. Crear archivo `.env` si no existe
+2. Agregar la línea:
+   ```env
+   SECRET_KEY=tu_clave_generada_con_secrets
+   ```
+3. Generar clave segura:
+   ```bash
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
+
+### Error: Token inválido o expirado
+
+**Problema:**
+```
+401 Unauthorized: Token inválido o expirado
+```
+
+**Solución:**
+1. Verificar que el token se está enviando correctamente en el header:
+   ```
+   Authorization: Bearer <token>
+   ```
+2. El token expira según `ACCESS_TOKEN_EXPIRE_MINUTES` en `.env`
+3. Hacer login nuevamente para obtener un nuevo token
+
+### Error: Permisos insuficientes (403)
+
+**Problema:**
+```
+403 Forbidden: Permisos insuficientes
+```
+
+**Solución:**
+- El usuario `lector` solo puede hacer GET
+- Usa el usuario `admin` para operaciones de escritura (POST, PUT, DELETE)
+
+### El servidor no se levanta
+
+**Problema:** El comando `uvicorn` no funciona
+
+**Solución:**
+```bash
+# Asegúrate de estar en el entorno virtual
+source .venv/bin/activate  # Linux/Mac
+.venv\Scripts\activate     # Windows
+
+# Reinstalar uvicorn
+pip install uvicorn --force-reinstall
+
+# Ejecutar desde la raíz del proyecto
+uvicorn app.main:app --reload
 ```
 
 ---
 
-## 📋 Requisitos Previos
+## 🎯 Casos de Uso y Ejemplos
 
-### Software Necesario:
+### Caso 1: Sistema de Registro de Clientes para Tienda
 
-1. **Python 3.12 o superior**
-   ```bash
-   python --version
-   ```
+**Escenario:** Una tienda quiere digitalizar el registro de sus clientes.
 
-2. **MySQL Server 8.0 o superior**
-   ```bash
-   mysql --version
-   ```
+**Flujo:**
+1. Empleado inicia sesión con `admin` / `admin123`
+2. Obtiene token JWT
+3. Registra nuevo cliente con POST `/clientes/`
+4. Consulta lista de clientes con GET `/clientes/`
+5. Actualiza información si hay cambios
 
-3. **pip** (gestor de paquetes de Python)
-   ```bash
-   pip --version
-   ```
+### Caso 2: Portal de Consulta para Vendedores
 
-4. **Editor de código** (recomendado: VS Code, PyCharm)
+**Escenario:** Vendedores necesitan consultar información de clientes pero no modificarla.
 
-5. **Cliente de pruebas de API** (opcionales):
-   - Postman
-   - Insomnia
-   - Thunder Client (extensión VS Code)
-
-### Conocimientos Requeridos:
-
-- ✅ Fundamentos de Python
-- ✅ Conceptos básicos de SQL
-- ✅ Protocolo HTTP
-- ✅ JSON
-- ✅ Línea de comandos básica
+**Flujo:**
+1. Vendedor inicia sesión con `lector` / `lector123`
+2. Obtiene token JWT (con rol `lector`)
+3. Consulta clientes (GET permitido)
+4. Si intenta crear/modificar → Error 403 Forbidden
 
 ---
 
-## ⚙️ Instalación y Configuración
+## 📖 Ejercicios Propuestos
 
-### Paso 1: Clonar o Descargar el Proyecto
+### Nivel Básico
 
-```bash
-# Si usas Git
-git clone <url-del-repositorio>
-cd clientes_api
+1. **Agregar campo "activo"** a la tabla clientes
+   - Modificar base de datos
+   - Actualizar schemas
+   - Implementar endpoint para activar/desactivar
 
-# O descargar y extraer el ZIP
+2. **Endpoint de búsqueda** por email
+   - Crear `GET /clientes/search?email=...`
+   - Implementar función en database.py
+
+3. **Paginación** en listado de clientes
+   - Agregar parámetros `skip` y `limit`
+   - `GET /clientes?skip=0&limit=10`
+
+### Nivel Intermedio
+
+4. **Implementar búsqueda avanzada**
+   - Buscar por nombre, apellido o email
+   - Soporte de filtros múltiples
+
+5. **Agregar timestamps** a clientes
+   - `created_at` y `updated_at`
+   - Actualizar automáticamente
+
+6. **Soft delete**
+   - No eliminar físicamente
+   - Marcar como inactivo
+
+### Nivel Avanzado
+
+7. **Implementar refresh tokens**
+   - Token de acceso corto (15 min)
+   - Refresh token largo (7 días)
+
+8. **Rate limiting**
+   - Limitar requests por IP
+   - Prevenir abuso de la API
+
+9. **Logging completo**
+   - Registrar todas las operaciones
+   - Logs estructurados con timestamps
+
+---
+
+## 🚀 Próximos Pasos
+
+### Mejoras Sugeridas
+
+- [ ] **Testing**: Agregar tests unitarios con pytest
+- [ ] **Migraciones**: Usar Alembic para gestionar cambios en BD
+- [ ] **ORM**: Migrar a SQLAlchemy para mejor abstracción
+- [ ] **Cache**: Implementar Redis para mejorar performance
+- [ ] **Async**: Usar driver async de MySQL
+- [ ] **Docker**: Containerizar la aplicación
+- [ ] **CI/CD**: Automatizar despliegue con GitHub Actions
+- [ ] **Monitoring**: Agregar métricas y observabilidad
+
+### Integración con Frontend
+
+Este backend está listo para conectarse con:
+- **React**: Usando axios o fetch
+- **Vue.js**: Usando axios o Vue Resource
+- **Angular**: Usando HttpClient
+- **Flutter/React Native**: Para apps móviles
+
+**Ejemplo de consumo desde JavaScript:**
+```javascript
+// Login
+const response = await fetch('http://127.0.0.1:8000/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: 'username=admin&password=admin123'
+});
+const { access_token } = await response.json();
+
+// Obtener clientes con autenticación
+const clientes = await fetch('http://127.0.0.1:8000/clientes/', {
+  headers: { 'Authorization': `Bearer ${access_token}` }
+});
 ```
 
-### Paso 2: Crear Entorno Virtual
+---
 
-**¿Por qué un entorno virtual?**
-- Aísla las dependencias del proyecto
-- Evita conflictos entre versiones
-- Facilita la gestión de paquetes
+## 📚 Recursos Adicionales
 
-```bash
-# Crear entorno virtual
-python -m venv venv
+### Documentación Oficial
 
-# Activar entorno virtual
-# En Linux/Mac:
-source venv/bin/activate
+- **FastAPI**: https://fastapi.tiangolo.com/
+- **Pydantic**: https://docs.pydantic.dev/
+- **MySQL Connector**: https://dev.mysql.com/doc/connector-python/en/
+- **JWT (Python-Jose)**: https://python-jose.readthedocs.io/
+- **Passlib**: https://passlib.readthedocs.io/
 
-# En Windows:
-venv\Scripts\activate
-```
+### Tutoriales Recomendados
 
-### Paso 3: Instalar Dependencias
+- [FastAPI Tutorial Oficial](https://fastapi.tiangolo.com/tutorial/)
+- [Pydantic Field Validators](https://docs.pydantic.dev/latest/concepts/validators/)
+- [JWT Authentication en FastAPI](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/)
+- [SQL con Python](https://realpython.com/python-sql-libraries/)
 
-```bash
-pip install -r requirements.txt
-```
+### Videos Educativos
 
-### Paso 4: Configurar Base de Datos
+- FastAPI - A Python Framework Full Course (freeCodeCamp)
+- Building REST APIs with FastAPI (TechWithTim)
+- JWT Authentication Tutorial (Pretty Printed)
 
-#### 4.1 Crear la Base de Datos
+---
 
-```bash
-# Ejecutar MySQL
-mysql -u root -p
+## 📝 Notas Finales
 
-# Ejecutar el script de inicialización
-source docs/init_db.sql
+### Seguridad en Producción
 
-# O copiar y pegar el contenido del archivo
-```
+⚠️ **IMPORTANTE**: Este proyecto es educativo. Para producción considera:
 
-Esto creará:
-- Base de datos `clientes_db`
-- Tabla `clientes` con su estructura
-- 5 registros de ejemplo
+1. **Variables de entorno seguras**: No usar valores por defecto
+2. **HTTPS**: Siempre usar SSL/TLS
+3. **CORS específico**: No usar `allow_origins=["*"]`
+4. **Rate limiting**: Limitar requests por IP
+5. **Logging y monitoring**: Implementar observabilidad
+6. **Validación adicional**: Sanitización de inputs
+7. **Secretos seguros**: Usar gestores de secretos (AWS Secrets Manager, HashiCorp Vault)
 
-#### 4.2 Configurar Variables de Entorno
+### Licencia
 
-Crear archivo `.env` en la raíz del proyecto:
+Este proyecto es de código abierto con fines educativos.
 
-```env
-DB_HOST=localhost
-DB_USER=root
+### Contribuciones
+
+Las contribuciones son bienvenidas:
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+---
+
+## 👨‍💻 Autor
+
+**Juan Carlos Sulbarán González**
+
+---
+
+## 🙏 Agradecimientos
+
+- Comunidad de FastAPI
+- Documentación de Pydantic
+- Estudiantes que han probado y mejorado este proyecto
+
+---
+
+<div align="center">
+
+**¿Preguntas o sugerencias?**
+
+Abre un issue en el repositorio o contacta al autor.
+
+⭐ Si este proyecto te fue útil, dale una estrella ⭐
+
+**Última actualización:** 6 de enero de 2026
+
+</div>
+
 DB_PASSWORD=tu_contraseña_mysql
 DB_NAME=clientes_db
 ```
