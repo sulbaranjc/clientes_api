@@ -4,29 +4,72 @@
 -- Fecha: 2025-11-12
 -- Descripción:
 --   Este script elimina la base de datos si ya existe,
---   la vuelve a crear desde cero y define la tabla 'clientes'.
+--   la crea desde cero e inicializa clientes, roles y usuarios.
 -- =========================================================
 
--- 1️⃣ Borrar la base de datos si ya existe
+-- 1️⃣ Eliminar base de datos si existe
 DROP DATABASE IF EXISTS clientes_db;
 
--- 2️⃣ Crear una nueva base de datos
-CREATE DATABASE clientes_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+-- 2️⃣ Crear base de datos
+CREATE DATABASE clientes_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
 
--- 3️⃣ Seleccionar la base de datos recién creada
+-- 3️⃣ Seleccionar la base de datos
 USE clientes_db;
 
--- 4️⃣ Crear tabla 'clientes'
+-- =========================================================
+-- 4️⃣ Tabla clientes
+-- =========================================================
 CREATE TABLE clientes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    telefono VARCHAR(50),
-    direccion VARCHAR(255)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  apellido VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  telefono VARCHAR(50),
+  direccion VARCHAR(255)
 );
 
--- 5️⃣ Insertar algunos registros de ejemplo
+-- =========================================================
+-- 5️⃣ Tabla roles
+-- =========================================================
+CREATE TABLE roles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL UNIQUE,
+  descripcion VARCHAR(150)
+);
+
+-- =========================================================
+-- 6️⃣ Tabla usuarios
+-- =========================================================
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  rol_id INT NOT NULL,
+  activo TINYINT NOT NULL DEFAULT 1,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NULL DEFAULT NULL
+    ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_usuarios_roles
+    FOREIGN KEY (rol_id)
+    REFERENCES roles(id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+);
+
+
+-- =========================================================
+-- 7️⃣ Datos iniciales de roles
+-- =========================================================
+INSERT INTO roles (nombre, descripcion) VALUES
+  ('admin', 'Puede crear, modificar y eliminar clientes'),
+  ('lector', 'Solo puede consultar y filtrar clientes');
+
+-- =========================================================
+-- 8️⃣ Datos de ejemplo en clientes
+-- =========================================================
 INSERT INTO clientes (nombre, apellido, email, telefono, direccion) VALUES
 ('Juan', 'Pérez', 'juan.perez@example.com', '555-0101', 'Calle 123, Ciudad'),
 ('María', 'García', 'maria.garcia@example.com', '555-0102', 'Avenida 456, Ciudad'),
@@ -34,5 +77,8 @@ INSERT INTO clientes (nombre, apellido, email, telefono, direccion) VALUES
 ('Ana', 'Martínez', 'ana.martinez@example.com', '555-0104', 'Paseo 321, Ciudad'),
 ('Luis', 'López', 'luis.lopez@example.com', '555-0105', 'Boulevard 654, Ciudad');
 
--- 6️⃣ Confirmar
-SELECT * FROM clientes;
+-- =========================================================
+-- 9️⃣ Verificación
+-- =========================================================
+-- SELECT * FROM clientes;
+-- SELECT * FROM roles;
