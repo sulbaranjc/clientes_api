@@ -1,53 +1,50 @@
 services:
-  clientes-api:
-    image: clientes-api:latest
-    container_name: clientes-api
-    restart: unless-stopped
-
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-    environment:
-      # nginx-proxy
-      VIRTUAL_HOST: clientes-api.docker.sulbaranjc.com
-      VIRTUAL_PORT: 8000
-
-      # DB
-      DB_HOST: clientes-api-db
-      DB_PORT: 3306
-      DB_NAME: clientes_db
-      DB_USER: clientes_user
-      DB_PASSWORD: clientes_pass
-
-    depends_on:
-      - clientes-api-db
-
-    networks:
-      - nginx-proxy
-      - clientes_api_backend
-
-  clientes-api-db:
+  db:
     image: mariadb:10.6
     container_name: clientes-api-db
+    environment:
+      - MARIADB_DATABASE=clientes_db
+      - MARIADB_USER=profesor
+      - MARIADB_PASSWORD=4688
+      - MARIADB_ROOT_PASSWORD=root4688
+    volumes:
+      - clientes_db_data:/var/lib/mysql
+      - ./docs/init_db.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    networks:
+      - backend
     restart: unless-stopped
 
+  app:
+    build: .
+    image: clientes-api:latest
+    container_name: clientes-api
     environment:
-      MYSQL_DATABASE: clientes_db
-      MYSQL_USER: clientes_user
-      MYSQL_PASSWORD: clientes_pass
-      MYSQL_ROOT_PASSWORD: rootpass
-
-    volumes:
-      - clientes_api_db_data:/var/lib/mysql
-
+      - DB_HOST=db
+      - DB_USER=profesor
+      - DB_PASSWORD=4688
+      - DB_NAME=clientes_db
+      - DB_PORT=3306
+      - VIRTUAL_HOST=clientes-api.docker.sulbaranjc.com
+      - VIRTUAL_PORT=8000
+    depends_on:
+      - db
     networks:
-      - clientes_api_backend
+      - backend
+      - proxy
+    restart: unless-stopped
 
 volumes:
-  clientes_api_db_data:
+  clientes_db_data:
 
 networks:
-  nginx-proxy:
+  # ✅ Red interna POR APLICACIÓN (crear a mano en el servidor)
+  backend:
     external: true
+    name: clientes_api_backend
 
-  clientes_api_backend:
+  # ✅ Red compartida con nginx-proxy (debe existir en el servidor)
+  proxy:
     external: true
+    name: proxy
+    # Si tu red real se llama nginx-proxy, usa esto en vez de "proxy":
+    # name: nginx-proxy
