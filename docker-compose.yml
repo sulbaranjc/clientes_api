@@ -16,12 +16,12 @@ services:
       DB_PASSWORD: clientes123
       DB_NAME: clientes_db
 
-    networks:
-      - nginx-proxy
-      - backend
-
     depends_on:
       - clientes-api-db
+
+    networks:
+      - backend
+      - nginx-proxy
 
   clientes-api-db:
     image: mariadb:10.6
