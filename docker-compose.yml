@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   clientes-api:
     image: clientes-api:latest
@@ -9,11 +7,11 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
     environment:
-      # 🔁 Integración con nginx-proxy (puerto 80)
+      # nginx-proxy
       VIRTUAL_HOST: clientes-api.docker.sulbaranjc.com
       VIRTUAL_PORT: 8000
 
-      # 🧩 Variables internas de la app (ejemplo DB)
+      # DB
       DB_HOST: clientes-api-db
       DB_PORT: 3306
       DB_NAME: clientes_db
@@ -25,7 +23,7 @@ services:
 
     networks:
       - nginx-proxy
-      - backend
+      - clientes_api_backend
 
   clientes-api-db:
     image: mariadb:10.6
@@ -41,21 +39,15 @@ services:
     volumes:
       - clientes_api_db_data:/var/lib/mysql
 
-    # ❌ NO exponer puertos en servidor
-    # ❌ NO ports:
-    # ❌ NO override aquí
-
     networks:
-      - backend
+      - clientes_api_backend
 
 volumes:
   clientes_api_db_data:
 
 networks:
-  # 🌐 Red compartida con nginx-proxy
   nginx-proxy:
     external: true
 
-  # 🔒 Red interna app ↔ DB
-  backend:
-    driver: bridge
+  clientes_api_backend:
+    external: true
