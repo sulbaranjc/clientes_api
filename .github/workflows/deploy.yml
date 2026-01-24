@@ -19,17 +19,23 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
           script: |
-            echo "📂 Entrando en carpeta de despliegue"
+            # 🔴 Si algo falla, el script se detiene y el job falla
+            set -e
+
+            echo "📂 Preparando carpeta de despliegue"
+            mkdir -p /home/sulbaranjc/apps/clientes_api
             cd /home/sulbaranjc/apps/clientes_api
 
-            echo "📥 Actualizando código desde GitHub"
+            echo "📥 Sincronizando código desde GitHub"
             if [ ! -d .git ]; then
+              echo "➡️ Repositorio no existe, clonando..."
               git clone https://github.com/sulbaranjc/clientes_api.git .
             else
+              echo "➡️ Repositorio existente, haciendo pull..."
               git pull origin deploy
             fi
 
             echo "🐳 Construyendo y levantando contenedor (sin down)"
             docker compose up -d --build
 
-            echo "✅ Despliegue finalizado sin afectar otros servicios"
+            echo "✅ Despliegue finalizado correctamente"
