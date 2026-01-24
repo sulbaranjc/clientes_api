@@ -3,14 +3,15 @@ services:
     image: clientes-api:latest
     container_name: clientes-api
     restart: always
+
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
     environment:
-      # 🔑 OBLIGATORIAS para nginx-proxy
+      # nginx-proxy
       VIRTUAL_HOST: clientes-api.docker.sulbaranjc.com
       VIRTUAL_PORT: 8000
 
-      # Variables de tu app
+      # Base de datos
       DB_HOST: clientes-api-db
       DB_PORT: 3306
       DB_USER: clientes
