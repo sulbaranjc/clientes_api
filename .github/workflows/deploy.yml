@@ -25,18 +25,18 @@ jobs:
             mkdir -p /home/sulbaranjc/apps/clientes_api
             cd /home/sulbaranjc/apps/clientes_api
 
-            echo "📥 Inicializando o actualizando repositorio"
+            echo "📥 Inicializando o actualizando repositorio (rama deploy)"
             if [ ! -d .git ]; then
-              echo "➡️ Clonando repositorio en rama deploy"
               git clone -b deploy https://github.com/sulbaranjc/clientes_api.git .
             else
-              echo "➡️ Forzando rama deploy"
               git fetch origin
               git checkout deploy
               git pull origin deploy
             fi
 
-            echo "🐳 Construyendo y levantando contenedor"
-            docker compose up -d --build
+            echo "🐳 Construyendo y levantando contenedores (SIN override)"
+            docker compose \
+              -f docker-compose.yml \
+              up -d --build
 
-            echo "✅ Despliegue completado en rama deploy"
+            echo "✅ Despliegue completado en entorno servidor"
