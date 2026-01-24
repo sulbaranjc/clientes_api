@@ -19,7 +19,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
           script: |
-            # 🔴 Si algo falla, el job falla
             set -e
 
             echo "📂 Preparando carpeta de despliegue"
@@ -28,19 +27,17 @@ jobs:
 
             echo "📥 Inicializando o actualizando repositorio (rama deploy)"
             if [ ! -d .git ]; then
-              echo "➡️ Clonando repositorio en rama deploy"
               git clone -b deploy https://github.com/sulbaranjc/clientes_api.git .
             else
-              echo "➡️ Forzando rama deploy"
               git fetch origin
               git checkout deploy
               git pull origin deploy
             fi
 
-            echo "🐳 Construyendo y levantando contenedores (SIN override, proyecto fijo)"
+            echo "🐳 Construyendo y levantando contenedores (modo seguro producción)"
             docker compose \
               -p clientes_api \
               -f docker-compose.yml \
-              up -d --build
+              up -d --build --no-recreate
 
             echo "✅ Despliegue completado correctamente en el servidor"
