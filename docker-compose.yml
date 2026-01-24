@@ -11,6 +11,7 @@ services:
     environment:
       - VIRTUAL_HOST=clientes-api.docker.sulbaranjc.com
       - VIRTUAL_PORT=8000
+      - VIRTUAL_PROTO=http
 
     depends_on:
       - clientes-api-db
