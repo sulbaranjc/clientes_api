@@ -1,50 +1,52 @@
 services:
   clientes-api:
     image: clientes-api:latest
+    container_name: clientes-api
     restart: always
-
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-    expose:
-      - "8000"
-
     environment:
-      - VIRTUAL_HOST=clientes-api.docker.sulbaranjc.com
-      - VIRTUAL_PORT=8000
-      - VIRTUAL_PROTO=http
+      # 🔑 OBLIGATORIAS para nginx-proxy
+      VIRTUAL_HOST: clientes-api.docker.sulbaranjc.com
+      VIRTUAL_PORT: 8000
+
+      # Variables de tu app
+      DB_HOST: clientes-api-db
+      DB_PORT: 3306
+      DB_USER: clientes
+      DB_PASSWORD: clientes123
+      DB_NAME: clientes_db
+
+    networks:
+      - nginx-proxy
+      - backend
 
     depends_on:
       - clientes-api-db
 
-    networks:
-      - clientes_api_backend
-      - nginx-proxy
-
-
   clientes-api-db:
     image: mariadb:10.6
+    container_name: clientes-api-db
     restart: always
 
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: clientes_db
-      MYSQL_USER: clientes_user
-      MYSQL_PASSWORD: clientes_pass
+      MYSQL_USER: clientes
+      MYSQL_PASSWORD: clientes123
 
     volumes:
-      - clientes_api_clientes_db_data:/var/lib/mysql
+      - clientes_api_db_data:/var/lib/mysql
 
     networks:
-      - clientes_api_backend
-
+      - backend
 
 volumes:
-  clientes_api_clientes_db_data:
-
+  clientes_api_db_data:
 
 networks:
-  clientes_api_backend:
-    external: true
+  backend:
+    name: clientes_api_backend
 
   nginx-proxy:
     external: true
