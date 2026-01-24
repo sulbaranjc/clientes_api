@@ -1,54 +1,44 @@
 services:
   clientes-api:
     image: clientes-api:latest
-    container_name: clientes-api
-    restart: always
-
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-    expose:
-      - "8000"   # 🔴 CLAVE PARA nginx-proxy
-
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
     environment:
-      VIRTUAL_HOST: clientes-api.docker.sulbaranjc.com
-      VIRTUAL_PORT: 8000
-
       DB_HOST: clientes-api-db
-      DB_PORT: 3306
+      DB_NAME: clientes_db
       DB_USER: clientes
       DB_PASSWORD: clientes123
-      DB_NAME: clientes_db
-
-    depends_on:
-      - clientes-api-db
-
+      DB_PORT: "3306"
+      VIRTUAL_HOST: clientes-api.docker.sulbaranjc.com
+      VIRTUAL_PORT: "8000"
     networks:
       - backend
       - nginx-proxy
+    restart: always
 
   clientes-api-db:
     image: mariadb:10.6
-    container_name: clientes-api-db
-    restart: always
-
     environment:
-      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: clientes_db
       MYSQL_USER: clientes
       MYSQL_PASSWORD: clientes123
-
+      MYSQL_ROOT_PASSWORD: root123
     volumes:
       - clientes_api_db_data:/var/lib/mysql
-
     networks:
       - backend
-
-volumes:
-  clientes_api_db_data:
+    restart: always
 
 networks:
   backend:
     name: clientes_api_backend
-
   nginx-proxy:
     external: true
+
+volumes:
+  clientes_api_db_data:
