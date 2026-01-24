@@ -1,6 +1,7 @@
-name: Deploy ValidacionDeFormularios
+name: Deploy clientes_api
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - deploy
@@ -10,33 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy real en servidor Docker
+      - name: Deploy clientes_api via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
           script: |
-            set -e
+            echo "📂 Entrando en carpeta de despliegue"
+            cd /home/sulbaranjc/apps/clientes_api
 
-            echo "📌 Entrando al proyecto"
-            cd ${{ secrets.DEPLOY_PATH }}
+            echo "📥 Actualizando código desde GitHub"
+            if [ ! -d .git ]; then
+              git clone https://github.com/sulbaranjc/clientes_api.git .
+            else
+              git pull origin deploy
+            fi
 
-            echo "📌 Limpiando repo (evita bloqueos por archivos sueltos)"
-            git reset --hard
-            git clean -fd
-
-            echo "📌 Sincronizando con origin/deploy"
-            git fetch origin
-            git checkout -B deploy origin/deploy
-            git pull --ff-only origin deploy
-
-            echo "📌 Rama activa:"
-            git branch --show-current
-
-            echo "📌 Commit desplegado:"
-            git log -1 --oneline
-
-            echo "🐳 Recreando contenedores Docker"
-            docker compose down
+            echo "🐳 Construyendo y levantando contenedor (sin down)"
             docker compose up -d --build
+
+            echo "✅ Despliegue finalizado sin afectar otros servicios"
