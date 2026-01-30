@@ -11,33 +11,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy clientes_api via SSH
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🐳 Construir imagen Docker
+        run: |
+          docker build -t clientes-api:latest .
+
+      - name: 📦 Empaquetar imagen
+        run: |
+          docker save clientes-api:latest | gzip > clientes-api.tar.gz
+
+      - name: 🚚 Copiar imagen al servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: clientes-api.tar.gz
+          target: /tmp
+
+      - name: 🚀 Desplegar en servidor Docker
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-
           script: |
             set -e
-
-            echo "📂 Preparando carpeta de despliegue"
-            mkdir -p /home/sulbaranjc/apps/clientes_api
             cd /home/sulbaranjc/apps/clientes_api
 
-            echo "📥 Inicializando o actualizando repositorio (rama deploy)"
-            if [ ! -d .git ]; then
-              git clone -b deploy https://github.com/sulbaranjc/clientes_api.git .
-            else
-              git fetch origin
-              git checkout deploy
-              git pull origin deploy
-            fi
+            docker compose down
+            docker load < /tmp/clientes-api.tar.gz
+            docker compose up -d
 
-            echo "🐳 Construyendo y levantando contenedores (modo seguro producción)"
-            docker compose \
-              -p clientes_api \
-              -f docker-compose.yml \
-              up -d --build --no-recreate
-
-            echo "✅ Despliegue completado correctamente en el servidor"
+            echo "✅ Despliegue completado correctamente"

@@ -25,11 +25,11 @@ app.include_router(clientes.router)
 @app.get("/")
 def root():
     return {
-        "mensaje": "API de Clientes activa 🚀 by JC****"
+        "mensaje": "API de Clientes activa 🚀 by JC****++++"
     }
 
 @app.get("/ping")
 def ping():
     return {
-        "mensaje": "pong 🚀 by JC****"
+        "mensaje": "pong 🚀 by JC****++++"
     }
