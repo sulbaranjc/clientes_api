@@ -31,5 +31,5 @@ def root():
 @app.get("/ping")
 def ping():
     return {
-        "mensaje": "pong 🚀"
+        "mensaje": "pong 🚀 by JC"
     }
