@@ -27,3 +27,9 @@ def root():
     return {
         "mensaje": "API de Clientes activa 🚀"
     }
+
+@app.get("/ping")
+def ping():
+    return {
+        "mensaje": "pong 🚀"
+    }
